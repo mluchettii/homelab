@@ -13,10 +13,6 @@ pi/docker/tailscale-state/
 vps/docker/pangolin/config/crowdsec/db/
 vps/docker/pangolin/config/letsencrypt/
 vps/docker/pangolin/config/traefik/logs/
-
-# Secrets
-.env
-.env.*
 *.pem
 *.key
 *.sqlite3
