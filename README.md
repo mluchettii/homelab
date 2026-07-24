@@ -6,62 +6,54 @@ Each service lives in its own directory with a standalone `docker-compose.yml` a
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Cloudflare DNS                               │
-│                                                                     │
-│  *.example.com  ──────►  DigitalOcean VPS (A record)                │
-│  *.ts.example.com ────►  Pi Tailscale IP (A record)                 │
-└──────────────────────┬──────────────────────────────────────────────┘
-                       │
-          ┌────────────▼────────────┐
-          │   DigitalOcean VPS      │
-          │   (Pangolin stack)      │
-          │                         │
-          │  ┌──────────┐  ┌──────┐│
-          │  │ Traefik  │◄─┤Crowd││
-          │  │ + Bouncer│  │ Sec ││
-          │  │ :80,:443 │  └──────┘│
-          │  └────┬─────┘          │
-          │       │ Newt tunnel     │
-          │       │ (WireGuard)     │
-          │  ┌────▼─────┐  ┌──────┐│
-          │  │Pangolin  │  │ Gerbil││
-          │  │ :3000-3002│ │ :51820││
-          │  └──────────┘  └──────┘│
-          └──────────┬─────────────┘
-                     │ Newt tunnel
-          ┌──────────▼─────────────┐
-          │   Raspberry Pi 5        │
-          │   (16GB, NVMe)          │
-          │                         │
-          │  ┌──────────┐  ┌──────┐│
-          │  │ Tailscale│  │Nginx ││
-          │  │ (host)   │  │Proxy ││
-          │  │          │  │:80,443││
-          │  └────┬─────┘  └──┬───┘│
-          │       │            │    │
-          │  ┌────▼────────────▼───┐│
-          │  │   Application Layer  ││
-          │  │                      ││
-          │  │  ┌────────┐ ┌──────┐││
-          │  │  │Authent-│ │Vault │││
-          │  │  │ ik     │ │warden│││
-          │  │  │ :9000  │ │:8000 │││
-          │  │  └────────┘ └──────┘││
-          │  │  ┌────────┐ ┌──────┐││
-          │  │  │AdGuard │ │Port- │││
-          │  │  │ Home   │ │ainer │││
-          │  │  │ :53,4433││:9443 │││
-          │  │  └────────┘ └──────┘││
-          │  │  ┌────────┐ ┌──────┐││
-          │  │  │Guac-   │ │Auto- │││
-          │  │  │amole   │ │mation│││
-          │  │  │ :8040  │ │n8n/  │││
-          │  │  │        │ │Ollama│││
-          │  │  └────────┘ └──────┘││
-          │  └──────────────────────┘│
-          └──────────────────────────┘
+```mermaid
+%%{init: {'theme': 'dark'}}%%
+flowchart TB
+    subgraph DNS["Cloudflare DNS"]
+        direction LR
+        A1["*.example.com<br/>A record"] --> A2["DigitalOcean VPS"]
+        B1["*.ts.example.com<br/>A record"] --> B2["Pi Tailscale IP"]
+    end
+    subgraph VPS["DigitalOcean VPS (Pangolin stack)"]
+        direction TB
+        Traefik["Traefik + Bouncer<br/>:80, :443"]
+        CrowdSec["CrowdSec"]
+        Pangolin["Pangolin<br/>:3000-3002"]
+        Gerbil["Gerbil<br/>:51820"]
+        Traefik -- "Newt tunnel<br/>(WireGuard)" --> Pangolin
+        Traefik --- CrowdSec
+        Pangolin --- Gerbil
+    end
+    subgraph PI["Raspberry Pi 5 (16GB, NVMe)"]
+        direction TB
+        Tailscale["Tailscale (host)"]
+        Nginx["Nginx Proxy<br/>:80, :443"]
+        subgraph APP["Application Layer"]
+            direction TB
+            subgraph APPROW1[" "]
+                direction LR
+                Authentik["Authentik<br/>:9000"]
+                Vaultwarden["Vaultwarden<br/>:8000"]
+                AdGuard["AdGuard Home<br/>:53, :443"]
+            end
+            subgraph APPROW2[" "]
+                direction LR
+                Portainer["Portainer<br/>:9443"]
+                Guacamole["Guacamole<br/>:8040"]
+                Automation["Automation<br/>n8n / Ollama"]
+            end
+        end
+        Tailscale --> Nginx
+        Nginx --> APP
+    end
+    DNS --> VPS
+    VPS -- "Newt tunnel" --> Nginx
+    style DNS fill:#1f2937,stroke:#58a6ff,stroke-width:1px,color:#c9d1d9
+    style VPS fill:#2d2410,stroke:#d29922,stroke-width:1px,color:#c9d1d9
+    style PI fill:#0d2818,stroke:#3fb950,stroke-width:1px,color:#c9d1d9
+    style APP fill:#161b22,stroke:#8b949e,stroke-width:1px,color:#c9d1d9
+    style APPROW1 fill:none,stroke:none
+    style APPROW2 fill:none,stroke:none
 ```
 
 ## Services
@@ -187,12 +179,12 @@ Pangolin provides geo-based ACL rules (e.g., US-only access to Authentik) and pl
 
 ## Prerequisites
 
-- Raspberry Pi 5 (16GB, NVMe) or similar ARM64 host
-- DigitalOcean droplet (for Pangolin stack — Basic Premium Intel recommended)
-- Tailscale accounts for all hosts
-- Docker + Docker Compose v2
+- Raspberry Pi 5 (16GB, NVMe) or similar Linux host
+- DigitalOcean droplet (for Pangolin stack)
+- Tailscale account
+- Docker
 - Domain names managed in Cloudflare
-- Cloudflare DNS API token (for Pangolin Let's Encrypt)
+- Cloudflare DNS API token (for Let's Encrypt)
 
 ## Setup
 
@@ -221,7 +213,7 @@ Pangolin provides geo-based ACL rules (e.g., US-only access to Authentik) and pl
 - **Tailscale** runs as a Docker container in host network mode, providing zero-trust mesh VPN for the entire server. Requires a Tailscale auth key (`TAILSCALE_AUTHKEY` in `.env`).
 - **Authentik** is the OIDC identity provider. After initial setup (navigate to `:9000` to create `akadmin`), configure Outposts and providers to enable SSO for other services.
 - **NTFY** is a push notification server with web dashboard and CLI client. Used by the automation stack for alert delivery.
-:- **Guacamole** runs behind the reverse proxy; configure OpenID SSO in `pi/docker/guacamole/.env` when using Authentik.
+- **Guacamole** runs behind the reverse proxy; configure OpenID SSO in `pi/docker/guacamole/.env` when using Authentik.
 - **Ollama** is Pi-optimized with `MAX_VRAM=2GB`, `MAX_LOADED_MODELS=1`, and `FLASH_ATTENTION=1` for stable inference on constrained hardware.
 - **Pangolin** requires a Cloudflare DNS API token (`CLOUDFLARE_DNS_API_TOKEN` in `.env`) and a CrowdSec LAPI key (`cscli lapi get key`).
 
@@ -230,7 +222,6 @@ Pangolin provides geo-based ACL rules (e.g., US-only access to Authentik) and pl
 - **Raspberry Pi 5** — 16GB RAM, NVMe storage
 - **DigitalOcean Droplet** — Basic Premium Intel (1 vCPU, 1 GB RAM, 35 GB SSD, 1 TB transfer)
 - **MikroTik hEX S** router (RouterOS, VLAN segmentation)
-- **Orbi RBR50** AP + **RBS50** satellite
 
 ## License
 
