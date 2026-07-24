@@ -1,0 +1,37 @@
+# Docker Compose setup for home server (Raspberry Pi)
+# Runtime data, secrets, and generated files are ignored
+# Runtime data
+pi/docker/nginx/data/
+pi/docker/authentik/data/
+pi/docker/adguardhome/work/
+pi/docker/adguardhome/conf/
+pi/docker/vaultwarden/vw-data/
+pi/docker/guacamole/pgdata/
+pi/docker/guacamole/drive/
+pi/docker/guacamole/record/
+pi/docker/tailscale-state/
+vps/docker/pangolin/config/crowdsec/db/
+vps/docker/pangolin/config/letsencrypt/
+vps/docker/pangolin/config/traefik/logs/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+pi/docker/automation/n8n/
+pi/docker/automation/ntfy/ntfy/cache/
+pi/docker/automation/ntfy/ntfy/db/
+pi/docker/automation/ntfy/ntfy/letsencrypt/
+pi/docker/automation/ntfy/loggifly/config/config.yaml
+pi/docker/automation/ollama/models/
+pi/docker/automation/ollama/backend/data/
+pi/docker/automation/ollama/static/
+pi/docker/automation/ollama/test/
+pi/docker/automation/ollama/.venv/
+pi/docker/automation/ollama/node_modules/
+pi/docker/automation/ollama/storage/

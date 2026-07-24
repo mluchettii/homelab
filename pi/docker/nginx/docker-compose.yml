@@ -1,0 +1,34 @@
+services:
+  nginx_proxy_manager:
+    image: "jc21/nginx-proxy-manager:latest"
+    container_name: nginx
+    restart: unless-stopped
+    network_mode: "host"
+    #ports:         # Disabled when in Host mode
+    #- "80:80"    # HTTP
+    #- "443:443"  # HTTPS
+    #- "81:81"    # Admin Panel
+    volumes:
+      - ./data/npm_data:/data
+      - ./data/npm_letsencrypt:/etc/letsencrypt
+      - ./data/npm_logs:/var/log/nginx  
+    environment:
+      DB_SQLITE_FILE: "/data/database.sqlite" # Using SQLite instead of MySQL for simplicity
+      #INITIAL_ADMIN_EMAIL: admin@example.com
+      #INITIAL_ADMIN_PASSWORD: changeme
+
+  goaccess:
+    image: justsky/goaccess-for-nginxproxymanager:latest
+    container_name: goaccess
+    restart: unless-stopped
+    environment:
+        - TZ=America/New_York
+        #- SKIP_ARCHIVED_LOGS=False #optional   
+        #- BASIC_AUTH=False #optional
+        #- BASIC_AUTH_USERNAME=user #optional
+        #- BASIC_AUTH_PASSWORD=pass #optional                
+    ports:
+      - '127.0.0.1:7880:7880'
+    volumes:
+        - ./data/npm_data/logs:/opt/log
+        # - ./data/npm_data/logs/proxy-host-1_access.log:/opt/log/proxy-host-1_access.log

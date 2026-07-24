@@ -1,0 +1,25 @@
+# ntfy server config file
+#
+# Please refer to the documentation at https://ntfy.sh/docs/config/ for details.
+
+# Public facing base URL of the service
+base-url: "https://${NTFY_DOMAIN}"
+
+# Listen address for the HTTP & HTTPS web server
+listen-http: "-"
+listen-https: ":443"
+
+# Path to the private key & cert file for the HTTPS web server
+key-file: /etc/letsencrypt/live/${NTFY_DOMAIN}/privkey1.pem
+cert-file: /etc/letsencrypt/live/${NTFY_DOMAIN}/fullchain1.pem
+
+# Cache: messages are cached in a local SQLite database
+# cache-file: <filename>
+# cache-duration: "12h"
+
+# Auth: user/access database for granular access control
+auth-file: "/var/lib/ntfy/user.db"
+# auth-default-access: "read-write"
+
+# Behind a reverse proxy (required when using nginx-proxy-manager)
+behind-proxy: true

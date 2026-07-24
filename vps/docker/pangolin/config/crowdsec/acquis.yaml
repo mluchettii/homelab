@@ -1,0 +1,7 @@
+# CrowdSec acquisition config
+# Add log sources here, e.g.:
+# - source: file
+#   filename: /var/log/syslog
+# - source: file
+#   filename: /var/log/auth.log
+# CrowdSec automatically collects Docker container logs when running in Docker

@@ -1,0 +1,135 @@
+# Automation stack: n8n + Ollama + Open WebUI + NTFY + LoggiFly
+#
+# Architecture:
+#   n8n          — workflow automation engine
+#   ollama       — local LLM inference (Pi-optimized)
+#   open-webui   — web UI for Ollama (RAG, chat, extensions)
+#   ntfy         — push notification server (alert delivery)
+#   loggifly     — log-to-ntfy bridge (container log monitoring)
+#
+# The loggifly-socket-proxy provides read-only Docker socket access.
+
+networks:
+  automation-stack:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${AUTOMATION_SUBNET:-172.31.0.0/16}
+
+services:
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PW}
+      - WEBHOOK_URL=${N8N_URL}
+      - N8N_PROXY_HOPS=1
+    volumes:
+      - ./n8n:/home/node/.n8n
+    networks:
+      - automation-stack
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:${OLLAMA_DOCKER_TAG-latest}
+    container_name: ollama
+    environment:
+      # Pi-optimized for Wazuh alerts
+      - OLLAMA_MAX_QUEUE=512
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_KEEP_ALIVE=2m
+      - OLLAMA_MAX_VRAM=2GB
+      - OLLAMA_FLASH_ATTENTION=1
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama:/root/.ollama
+    pull_policy: always
+    tty: true
+    networks:
+      - automation-stack
+    restart: unless-stopped
+
+  open-webui:
+    build:
+      context: .
+      dockerfile: ./ollama/Dockerfile
+    image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
+    container_name: open-webui
+    ports:
+      - "${OPEN_WEBUI_PORT:-3020}:8080"
+    environment:
+      - 'OLLAMA_BASE_URL=http://ollama:11434'
+      - 'WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}'
+    volumes:
+      - open-webui:/app/backend/data
+    depends_on:
+      - ollama
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - automation-stack
+    restart: unless-stopped
+
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: ntfy
+    command:
+      - serve
+    environment:
+      - TZ=America/New_York
+    volumes:
+      - ./ntfy/ntfy/cache/ntfy:/var/cache/ntfy
+      - ./ntfy/ntfy/config:/etc/ntfy
+      - ./ntfy/ntfy/db:/var/lib/ntfy
+    ports:
+      - "${NTFY_HTTP_PORT:-8015}:80"
+      - "${NTFY_HTTPS_PORT:-9015}:443"
+    healthcheck:
+        test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -Eo '\"healthy\"\\s*:\\s*true' || exit 1"]
+        interval: 60s
+        timeout: 10s
+        retries: 3
+        start_period: 40s
+    restart: unless-stopped
+    init: true
+    networks:
+      - automation-stack
+
+  loggifly:
+    image: ghcr.io/clemcer/loggifly:latest
+    container_name: loggifly
+    user: "${LOGGIFY_UID:-1000}:${LOGGIFY_GID:-1000}"
+    read_only: true
+    environment:
+      TZ: America/New_York
+    volumes:
+      - socket-proxy:/var/run
+      - ./ntfy/loggifly/config/config.yaml:/app/config.yaml
+    depends_on:
+      - loggifly-socket-proxy
+    networks:
+      - automation-stack
+    restart: unless-stopped
+
+  loggifly-socket-proxy:
+    container_name: loggifly-socket-proxy
+    image: "11notes/socket-proxy:2"
+    read_only: true
+    user: "${SOCKET_PROXY_UID:-0}:${SOCKET_PROXY_GID:-984}"
+    volumes:
+      - "/run/docker.sock:/run/docker.sock:ro"
+      - "socket-proxy:/run/proxy"
+    networks:
+      - automation-stack
+    restart: always
+
+volumes:
+  ollama: {}
+  open-webui: {}
+  socket-proxy:

@@ -1,0 +1,15 @@
+services:
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale
+    hostname: ${TAILSCALE_HOSTNAME:-pi}
+    network_mode: "host"
+    environment:
+      - TS_AUTHKEY=${TAILSCALE_AUTHKEY:?auth key required}
+      - TS_STATE_DIR=${TAILSCALE_STATE_DIR:-/var/lib/tailscale}
+    volumes:
+      - ${TAILSCALE_STATE_PATH:-./tailscale-state}:/var/lib/tailscale
+    cap_add:
+      - net_admin
+      - net_raw
+    restart: unless-stopped

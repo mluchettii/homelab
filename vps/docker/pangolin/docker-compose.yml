@@ -1,0 +1,100 @@
+# Pangolin — CrowdSec (IDS) + Traefik + Poulngin + Gerbil (WireGuard)
+#
+# Architecture:
+#   crowdsec  — intrusion detection, monitors logs, blocks malicious IPs
+#   traefik   — reverse proxy with CrowdSec bouncer plugin (real-time blocking)
+#   pangolin  — security dashboard (threat visualization, CrowdSec management)
+#   gerbil    — WireGuard server with CrowdSec integration (auto-block in VPN)
+
+networks:
+  default:
+    driver: bridge
+    enable_ipv6: true
+    name: ${PANGOLIN_NETWORK:-pangolin}
+
+services:
+  crowdsec:
+    image: docker.io/crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    command: -t
+    environment:
+      - COLLECTIONS=crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules
+      - ENROLL_INSTANCE_NAME=${PANGOLIN_INSTANCE_NAME:-pangolin-crowdsec}
+      - ENROLL_TAGS=docker
+      - GID=${CROWDSEC_GID:-1000}
+      - PARSERS=crowdsecurity/whitelists
+    healthcheck:
+      test: ["CMD", "cscli", "lapi", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    ports:
+      - "${CROWDSEC_METRICS_PORT:-6060}:6060"
+      - "${CROWDSEC_API_PORT:-8080}:8080"
+    volumes:
+      - ./config/crowdsec:/etc/crowdsec
+      - ./config/crowdsec/db:/var/lib/crowdsec/data
+      - ./config/traefik/logs:/var/log/traefik
+    restart: unless-stopped
+
+  gerbil:
+    image: docker.io/fosrl/gerbil:latest
+    container_name: gerbil
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    command:
+      - --reachableAt=http://gerbil:3004
+      - --generateAndSaveKeyTo=/var/config/key
+      - --remoteConfig=http://pangolin:3001/api/v1/
+    depends_on:
+      pangolin:
+        condition: service_healthy
+    ports:
+      - "51820:51820/udp"
+      - "21820:21820/udp"
+      - "443:443"
+      - "80:80"
+      - "47984:47984"
+      - "47989:47989"
+      - "48010:48010"
+      - "47998:47998/udp"
+      - "47999:47999/udp"
+      - "48000:48000/udp"
+      - "48002:48002/udp"
+      - "48010:48010/udp"
+    volumes:
+      - ./config:/var/config
+    restart: unless-stopped
+
+  pangolin:
+    image: docker.io/fosrl/pangolin:latest
+    container_name: pangolin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/"]
+      interval: 10s
+      retries: 15
+      timeout: 10s
+    volumes:
+      - ./config:/app/config
+    restart: unless-stopped
+
+  traefik:
+    image: docker.io/traefik:latest
+    container_name: traefik
+    command:
+      - --configFile=/etc/traefik/traefik_config.yml
+    environment:
+      - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
+    depends_on:
+      crowdsec:
+        condition: service_healthy
+      pangolin:
+        condition: service_healthy
+    network_mode: service:gerbil
+    volumes:
+      - ./config/traefik:/etc/traefik:ro
+      - ./config/letsencrypt:/letsencrypt
+      - ./config/traefik/logs:/var/log/traefik
+    restart: unless-stopped
