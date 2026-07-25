@@ -17,7 +17,7 @@ Clientless remote desktop gateway supporting VNC, RDP, and SSH via HTML5. Runs t
 
 3. Access the web interface at `http://guacamole.ts.domain.com` (or your configured port).
 
-## SSO with Authentik
+## SSO with Authentik (Optional)
 
 Enable OpenID SSO by setting the following in `.env`:
 
