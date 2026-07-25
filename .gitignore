@@ -31,3 +31,6 @@ pi/docker/automation/ollama/test/
 pi/docker/automation/ollama/.venv/
 pi/docker/automation/ollama/node_modules/
 pi/docker/automation/ollama/storage/
+pi/docker/nessus/nessus_data/
+pi/docker/rustdesk/data/
+pi/docker/rustdesk/config/

@@ -1,0 +1,16 @@
+# Tenable Nessus — vulnerability scanner
+#
+# Runs in host network mode (required for Nessus port binding).
+# Access the web console at https://<pi-ip>:8834
+#
+# License: Essentials (free, 16 hosts) or Professional/Expert (trial)
+
+services:
+  nessus:
+    image: tenable/nessus:latest-oracle
+    container_name: nessus
+    network_mode: host
+    volumes:
+      - ./nessus_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always

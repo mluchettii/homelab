@@ -1,0 +1,26 @@
+# RustDesk — open-source remote desktop server
+#
+# Ports:
+#   21114-21119/tcp  — ID/relay server
+#   21116/udp        — NAT traversal
+#
+# After deployment, run: docker logs hbbs
+# to get the public key for client configuration.
+
+services:
+  rustdesk:
+    image: rustdesk/rustdesk-server-s6:latest
+    container_name: rustdesk
+    ports:
+      - "${RUSTDESK_PORT_ID_RELAY:-21114}:21114/tcp"
+      - "${RUSTDESK_PORT_ID_RELAY_UDP:-21116}:21116/tcp"
+      - "${RUSTDESK_PORT_ID_RELAY_UDP:-21116}:21116/udp"
+      - "${RUSTDESK_PORT_API:-21117}:21117/tcp"
+      - "${RUSTDESK_PORT_RELAY:-21118}:21118/tcp"
+      - "${RUSTDESK_PORT_TLS:-21119}:21119/tcp"
+    environment:
+      - TZ=America/New_York
+    volumes:
+      - ./data:/data
+      - ./config:/config
+    restart: always

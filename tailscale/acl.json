@@ -25,6 +25,12 @@
         "dst": ["tag:pi"],
         "ip":  ["tcp:1514", "tcp:1515", "tcp:55000"]
       },
+      // RustDesk (remote desktop)
+      {
+        "src": ["tag:clients"],
+        "dst": ["tag:pi"],
+        "ip":  ["tcp:21114", "tcp:21116", "tcp:21117", "tcp:21118", "tcp:21119", "udp:21116"]
+      },
       // Subnet route
       {
         "src": ["tag:clients"],

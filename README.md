@@ -67,7 +67,7 @@ flowchart TB
 | **vaultwarden** | vaultwarden/server | 8000 | Password manager (Bitwarden compatible) |
 | **tailscale** | tailscale/tailscale | host | Zero-trust VPN node |
 | **guacamole** | guacamole/guacamole + postgres:alpine | 8040 | Remote desktop gateway (VNC/RDP/SSH) |
-| **loggifly** | loggifly/loggifly | — | Container log monitor → NTFY alerts |
+| **rustdesk** | rustdesk/rustdesk-server-s6 | 21114–21119 | Self-hosted remote desktop server |
 | **n8n** | n8nio/n8n | 5678 | Workflow automation |
 | **ollama** | ollama/ollama | 11434 | Local LLM inference |
 | **open-webui** | ghcr.io/open-webui/open-webui | 3020 | Web UI for Ollama |
@@ -89,6 +89,12 @@ Open-source Identity Provider with SSO, MFA, and OIDC. Supports OpenID Connect f
 Clientless remote desktop gateway (VNC/RDP/SSH) via HTML5 with Authentik SSO support.
 [→ Details](pi/docker/guacamole/)
 
+#### RustDesk
+
+Self-hosted remote desktop server with end-to-end encryption, file transfer, and chat.
+
+[→ Details](pi/docker/rustdesk/)
+
 ### Web Traffic Analytics
 
 #### GoAccess
@@ -106,7 +112,7 @@ XDR/SIEM with FIM, CIS compliance, and n8n-powered SOAR alert triage.
 #### Tenable Nessus
 
 Self-hosted vulnerability scanner detecting flaws, misconfigurations, and insecure protocols.
-[→ Details](https://mluchetti.com/docs/security/nessus/)
+[→ Details](pi/docker/nessus/)
 
 ### Automation Stack
 
@@ -153,6 +159,7 @@ ACL rules are defined in [`tailscale/acl.json`](tailscale/acl.json). Key policie
 - **HTTP/HTTPS** — clients → servers (tcp:80, 443)
 - **SSH** — clients → Pi (tcp:22)
 - **Wazuh** — clients → Pi (tcp:1514, 1515, 55000)
+- **RustDesk** — clients → Pi (tcp:21114–21119, udp:21116)
 - **Subnet route** — clients → 10.0.30.0/24 (all ports)
 - **Exit node** — clients → internet (all traffic)
 
