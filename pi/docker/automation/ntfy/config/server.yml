@@ -2,14 +2,14 @@
 #
 # https://ntfy.sh/docs/config/
 
-base-url: "https://ntfy.ts.mydomain.com"
+base-url: "https://ntfy.ts.domain.com"
 
 listen-http: "-"  # Set to :80 to enable HTTP
 listen-https: ":443"
 
 # TLS certificate (Let's Encrypt via Nginx Proxy Manager)
-key-file: /etc/letsencrypt/live/*.ts.mydomain.com/privkey1.pem
-cert-file: /etc/letsencrypt/live/*.ts.mydomain.com/fullchain1.pem
+key-file: /etc/letsencrypt/live/*.ts.domain.com/privkey1.pem
+cert-file: /etc/letsencrypt/live/*.ts.domain.com/fullchain1.pem
 
 auth-file: "/var/lib/ntfy/user.db"
 auth-default-access: "deny-all"

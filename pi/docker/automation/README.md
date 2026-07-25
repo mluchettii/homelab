@@ -51,7 +51,7 @@ Monitors container logs and sends alerts to NTFY. Uses a read-only socket proxy 
    - **Ollama** — `ollama.ts.domain.com`
    - **Open WebUI** — `open-webui.ts.domain.com`
    - **NTFY** — `ntfy.ts.domain.com` (HTTP), `https://ntfy.ts.domain.com` (HTTPS)
-```
+
 n8n (workflow engine)
     ↓
 Ollama (LLM inference) ←→ Open WebUI (chat UI, RAG)
