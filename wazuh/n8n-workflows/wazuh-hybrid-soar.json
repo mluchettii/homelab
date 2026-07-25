@@ -1,0 +1,549 @@
+{
+  "name": "Wazuh Hybrid SOAR",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "5eadf22f1e1ed404167ff9b2",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "22b21bcc-344c-4e0a-90bd-daa0d2c292b4",
+      "name": "Wazuh Alert",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -1216,
+        976
+      ],
+      "webhookId": "ff83a7cf-fd39-4e4b-994d-ae278d8f7ad4",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "topic": "WAZUH",
+        "message": "={{ $json.clean_message }}",
+        "title": "🚨 Wazuh Alert",
+        "click": "https://wazuh.ts.mydomain.com",
+        "additional_fields": {
+          "alternate_url": "https://ntfy.mydomain.com",
+          "bearer_token": "tk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      },
+      "id": "ce029fc5-f2c5-4fe5-b3f9-7ec5c3634a48",
+      "name": "Send to Ntfy",
+      "type": "n8n-nodes-ntfy.Ntfy",
+      "typeVersion": 1,
+      "position": [
+        32,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Clean up AI response for Ntfy notification\nconst aiResponse = $input.item.json.output.text;\nconst alert = $input.item.json;\n\n// Remove markdown and format for clean notification\nconst cleanText = aiResponse\n  .replace(/\\\\/g, '')              // Remove escape slashes\n  .replace(/\\*\\*/g, '')            // Remove bold markdown\n  .replace(/\\*/g, '')              // Remove italic markdown\n  .replace(/#+ /g, '')             // Remove headers\n  .replace(/_/g, '')               // Remove underscores\n  .replace(/\\[/g, '')              // Remove brackets\n  .replace(/\\]/g, '')\n  .replace(/`/g, '')               // Remove backticks\n  .replace(/  +/g, ' ')            // Remove extra spaces\n  .replace(/\\n{3,}/g, '\\n\\n')      // Collapse multiple newlines\n  .replace(/\\n /g, '\\n')           // Remove leading spaces\n  .replace(/ - /g, ' — ')          // Replace dash with em dash\n  .trim();\n\nreturn [{\n  json: {\n    clean_message: cleanText,\n    alert_data: alert\n  }\n}];"
+      },
+      "id": "84ba3b7e-3305-4def-a650-45cc8aed68d1",
+      "name": "Format for Ntfy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "combineMapPrompt": "You are an experienced SOC AI Analyst. Analyze the following Wazuh security alert and provide a detailed investigation report.\n\n## ALERT DATA\n{{ $json }}\n\n## FULL LOG\n{{ $json.full_log }}\n\n## REQUIRED FORMAT\n\n**Alert Name:** [Brief title]\n\n**Alert Description:** [What this alert indicates]\n\n**MITRE ATT&CK:**\n- Tactic: [Tactic name and description]\n- Technique: [Technique ID and description]\n\n**Impacted Scope:**\n- Source IP: {{ $json.data.srcip || 'N/A' }}\n- Destination IP: {{ $json.data.dstip || 'N/A' }}\n- Host Machine: {{ $json.agent.name }} ({{ $json.agent.ip }})\n\n**External Artifacts Reputation Check:**\n[Check reputation of IPs, domains, file hashes if present]\n\n**Analysis:**\n[Detailed security analysis - what happened, why it's significant, potential impact]\n\n**Verdict:**\n[True Positive / False Positive / Suspicious Activity]\n\n**Security Recommendations:**\n1. [Immediate action]\n2. [Investigation steps]\n3. [Prevention measures]\n\nProvide a clear, organized report with each section on a new line.",
+              "prompt": "You are an experienced SOC AI Analyst. Analyze the following Wazuh security alert and provide a concise summary.\n\n\"{text}\"\n\nProvide a brief, actionable summary."
+            }
+          }
+        }
+      },
+      "id": "a47e30a2-0b7b-4237-a148-1b6961908361",
+      "name": "AI Investigation",
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "position": [
+        -544,
+        576
+      ],
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        976
+      ],
+      "id": "11252968-947f-4a49-a918-9cd3b1cefaa3",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = items[0].json.body || {};\nconst syscheck = body.syscheck || {};\nconst rule = body.rule || {};\n\nconst md5 = syscheck.md5_after || null;\nconst sha1 = syscheck.sha1_after || null;\nconst sha256 = syscheck.sha256_after || null;\nconst filePath = syscheck.path || null;\n\nconst description = rule.description || 'No description';\nconst agent = body.agent?.name || 'unknown';\nconst level = rule.level || 'unknown';\n\nreturn [{\n  json: {\n    type: 'file_alert',\n    md5,\n    sha1,\n    sha256,\n    file_path: filePath,\n    description,\n    agent,\n    level,\n    full_alert: body\n  }\n}];\n"
+      },
+      "id": "7eea789f-253c-453e-a03b-1fcfd2c385a1",
+      "name": "Extract IOCs",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -768,
+        1200
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle data from BOTH Extract IOCs AND VirusTotal\nconst inputData = items[0].json;\n\n// Preserve original Wazuh data FIRST (from Extract IOCs)\nconst originalAlert = inputData.full_alert?.alert || inputData.alert || {};\nconst vtData = inputData.data?.attributes || {};\n\n// Extract VT data (if available)\nconst summary = {\n  SHA256: inputData.data?.id || 'N/A',\n  Malicious: vtData?.last_analysis_stats?.malicious || 0,\n  Suspicious: vtData?.last_analysis_stats?.suspicious || 0,\n  Undetected: vtData?.last_analysis_stats?.undetected || 0,\n  Harmless: vtData?.last_analysis_stats?.harmless || 0,\n  Tags: (vtData?.tags || []).join(', '),\n  Tags_HTML: (vtData?.tags || []).map(tag => `<span class=\"tag\">${tag.trim()}</span>`).join(''),\n  Magic: vtData?.magic || 'N/A',\n  Name: vtData?.meaningful_name || 'Unknown',\n  Description: vtData?.popular_threat_classification?.suggested_threat_label || 'No Label',\n  Reputation: vtData?.reputation || 0,\n  \n  // CRITICAL: Wazuh context from original alert\n  AgentName: originalAlert.agent?.name || 'Unknown',\n  AgentIP: originalAlert.agent?.ip || 'N/A',\n  FilePath: originalAlert.syscheck?.path || 'Unknown',\n  Timestamp: originalAlert.timestamp || 'Unknown',\n  RuleID: originalAlert.rule?.id || 'Unknown',\n  \n  Generated_At: new Date().toISOString()\n};\n\n// Status logic\nsummary.Status = (summary.Malicious > 0 || summary.Suspicious > 0) ? 'Suspicious' : 'Safe';\n\nreturn [{ json: { summary } }];\n"
+      },
+      "id": "38cf274c-f17a-4493-a25c-d4f2a7ac82ff",
+      "name": "Generate File Summary",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        32,
+        1200
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "c151e5cc-a506-4c2f-9c1a-7159592eb1b7",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.summary.Status }}",
+                    "rightValue": "Suspicious"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "698ec508-6e0a-4718-9b6d-e1fb46999911",
+      "name": "Filter Suspicious Files",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        256,
+        1296
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "curlImport": "",
+        "httpVariantWarning": "",
+        "method": "GET",
+        "url": "=https://www.virustotal.com/api/v3/files/{{ $json.full_alert.alert.syscheck.sha256_after }}",
+        "": "",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "virusTotalApi",
+        "provideSslCertificates": false,
+        "sendQuery": false,
+        "sendHeaders": false,
+        "sendBody": false,
+        "options": {},
+        "infoMessage": ""
+      },
+      "id": "9527d099-de38-4d8f-a35b-dd24318f44da",
+      "name": "VirusTotal File Hash Validation",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -480,
+        1264
+      ],
+      "typeVersion": 4.2,
+      "extendsCredential": "virusTotalApi",
+      "credentials": {
+        "virusTotalApi": {
+          "id": "GKG5QTo6juMIL9Jy",
+          "name": "VirusTotal account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bd111ddc-fb28-489a-b5e1-35f236fe65a3",
+              "leftValue": "={{ $json.body.alert.rule.level }}",
+              "rightValue": 9,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "b4054fb8-f85e-47c0-a343-7fccb8cf6512",
+              "leftValue": "={{ $json.body.body.alert.rule.level }}",
+              "rightValue": 9,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "9ac220a8-f707-42c3-9d95-819020e83138",
+              "leftValue": "={{ $json.body.rule.level }}",
+              "rightValue": 9,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "b9ab286d-81cc-4849-afc1-b332e5fab83b",
+              "leftValue": "={{ $json.body.body.rule.level }}",
+              "rightValue": 9,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -768,
+        832
+      ],
+      "id": "a8c1e353-9186-4321-86b0-91867bd05bcb",
+      "name": "Level >= 9?"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -192,
+        1200
+      ],
+      "id": "35221370-49d7-4964-b1ac-dfbbe5f89ffd",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:3b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        800
+      ],
+      "id": "a5d803a9-6fd3-4451-8909-6cb104d37e7a",
+      "name": "Ollama Model qwen2.5:3b",
+      "credentials": {
+        "ollamaApi": {
+          "id": "gpPHQDV2OEF4SYur",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "topic": "WAZUH",
+        "message": "=⚠️ File Threat Detected\n🖥️ Agent: {{ $json.summary.AgentName || 'Unknown' }}\nIP: {{ $json.summary.AgentIP || 'N/A' }}\n🕐 Time: {{ $json.summary.Timestamp || 'Unknown' }}\n🧾 File: {{ $json.summary.FilePath || 'Unknown' }}\n🧬 SHA256: {{ $json.summary.SHA256.slice(0, 12) }}...\n🔍 Status: {{ $json.summary.Status }}\n📛 Threat: {{ $json.summary.Description }}",
+        "title": "🚨 Wazuh Alert",
+        "click": "=https://www.virustotal.com/gui/file/{{ $json.summary.SHA256 }}",
+        "additional_fields": {
+          "alternate_url": "https://ntfy.mydomain.com",
+          "bearer_token": "tk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      },
+      "type": "n8n-nodes-ntfy.Ntfy",
+      "typeVersion": 1,
+      "position": [
+        480,
+        1296
+      ],
+      "id": "d4fa0196-58ad-426c-9190-0d79ecf47a27",
+      "name": "Ntfy Send"
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>File Threat Summary</title>\n  <style>\n    body {\n      font-family: \"Segoe UI\", sans-serif;\n      background-color: #121212;\n      color: #f0f0f0;\n      padding: 20px;\n    }\n    .card {\n      background-color: #1e1e1e;\n      border-radius: 12px;\n      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);\n      padding: 20px;\n      max-width: 600px;\n      margin: auto;\n      border: 1px solid #333;\n    }\n    .long-text {\n      word-break: break-all;\n      overflow-wrap: break-word;\n      white-space: pre-wrap;\n      font-size: 0.9rem;\n      color: #e0e0f0;\n    }\n    h1 {\n      color: #00bfff;\n    }\n    .label {\n      font-weight: bold;\n      color: #c5e1a5;\n    }\n    .tag {\n      background-color: #333;\n      color: #c5cae9;\n      border-radius: 5px;\n      padding: 2px 6px;\n      margin: 3px 4px 3px 0;\n      display: inline-block;\n      font-size: 0.85rem;\n    }\n    .status-safe {\n      color: #00e676;\n    }\n    .status-suspicious {\n      color: #ff5252;\n    }\n    .timestamp {\n      margin-top: 20px;\n      font-size: 0.9rem;\n      color: #999;\n    }\n    .link-button {\n      display: inline-block;\n      background-color: #00bfff;\n      color: white;\n      padding: 8px 16px;\n      text-decoration: none;\n      border-radius: 6px;\n      font-size: 0.9rem;\n      margin-top: 8px;\n      transition: background-color 0.2s;\n    }\n    .link-button:hover {\n      background-color: #0099cc;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"card\">\n    <h1>File Threat Summary</h1>\n    \n    <p><span class=\"label\">Agent:</span> {{ $json.summary.AgentName || 'Unknown' }}</p>\n    <p><span class=\"label\">IP:</span> {{ $json.summary.AgentIP || 'N/A' }}</p>\n    <p><span class=\"label\">File:</span> {{ $json.summary.FilePath || 'Unknown' }}</p>\n    <p><span class=\"label\">SHA256:</span> <span class=\"long-text\">{{ $json.summary.SHA256 }}</span></p>\n\n    <p><span class=\"label\">Reputation:</span> {{ $json.summary.Reputation }}</p>\n    <p><span class=\"label\">Threat Label:</span> {{ $json.summary.Description }}</p>\n    <p><span class=\"label\">Magic Signature:</span> {{ $json.summary.Magic }}</p>\n\n    <p><span class=\"label\">Status:</span> \n      <span class=\"{{ $json.summary.Status === 'Safe' ? 'status-safe' : 'status-suspicious' }}\">\n        {{ $json.summary.Status }}\n      </span>\n    </p>\n\n    <p class=\"label\">Analysis Stats:</p>\n    <ul>\n      <li>Malicious: {{ $json.summary.Malicious }}</li>\n      <li>Suspicious: {{ $json.summary.Suspicious }}</li>\n      <li>Harmless: {{ $json.summary.Harmless }}</li>\n      <li>Undetected: {{ $json.summary.Undetected }}</li>\n    </ul>\n\n    <p class=\"label\">\n      <a href=\"https://www.virustotal.com/gui/file/{{ $json.summary.SHA256 }}\" \n         target=\"_blank\" \n         class=\"link-button\" \n         style=\"margin-top: 8px;\">\n        View on VirusTotal\n      </a>\n    </p>\n    \n    <p class=\"label\">Tags:</p>\n    <div>{{ $json.summary.Tags_HTML }}</div>\n\n  </div>\n  <div class=\"timestamp\">Generated at: {{ $json.summary.Generated_At }}</div>\n</body>\n</html>"
+      },
+      "id": "ceb5d17b-9147-488c-8924-87cbf4a5b0d2",
+      "name": "HTML Formatting",
+      "type": "n8n-nodes-base.html",
+      "position": [
+        256,
+        1104
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "sendTo": "email@gmail.com",
+        "subject": "Wazuh Alert",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "cd694032-2640-47cb-a70b-15d1e97b76e8",
+      "name": "Gmail Send",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        480,
+        1104
+      ],
+      "webhookId": "e8348357-0f4a-458a-b6d5-8c2a8260ba7e",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Si4j1KKaQH6oli9P",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "71a29e48-921f-4e3e-bb32-2979569492f1",
+              "leftValue": "={{ $json.body.alert.rule.id }}",
+              "rightValue": "110002",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "2dd9089c-34fa-4f39-b5ee-2ee72697e30d",
+              "leftValue": "={{ $json.body.alert.rule.id }}",
+              "rightValue": "87105",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -992,
+        976
+      ],
+      "id": "f74ad993-e56b-4806-99af-ea0e2e316f46",
+      "name": "Malware Check"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Wazuh Alert": {
+      "main": [
+        [
+          {
+            "node": "Malware Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Investigation": {
+      "main": [
+        [
+          {
+            "node": "Format for Ntfy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for Ntfy": {
+      "main": [
+        [
+          {
+            "node": "Send to Ntfy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract IOCs": {
+      "main": [
+        [
+          {
+            "node": "VirusTotal File Hash Validation",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate File Summary": {
+      "main": [
+        [
+          {
+            "node": "HTML Formatting",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Suspicious Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Suspicious Files": {
+      "main": [
+        [
+          {
+            "node": "Ntfy Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VirusTotal File Hash Validation": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Level >= 9?": {
+      "main": [
+        [
+          {
+            "node": "AI Investigation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Generate File Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Model qwen2.5:3b": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Investigation",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML Formatting": {
+      "main": [
+        [
+          {
+            "node": "Gmail Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Malware Check": {
+      "main": [
+        [
+          {
+            "node": "Extract IOCs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Level >= 9?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "0a0669be-68b5-47ff-ba86-cc817bc83bc5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7edb76dac2b1e0c5b0a1e2ed82a441dbd809e4de901805361e0c2ff2aae5143b"
+  },
+  "id": "cRMStRBIalPWFkfd",
+  "tags": []
+}

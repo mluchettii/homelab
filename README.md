@@ -72,6 +72,8 @@ flowchart TB
 | **ollama** | ollama/ollama | 11434 | Local LLM inference |
 | **open-webui** | ghcr.io/open-webui/open-webui | 3020 | Web UI for Ollama |
 | **pangolin** | fosrl/pangolin + crowdsecurity/crowdsec | 3000, 8080 | Security dashboard + IDS (DigitalOcean droplet) |
+| **wazuh** | wazuh/wazuh-manager + wazuh-agent | 1514, 1515, 55000 | XDR/SIEM — endpoint monitoring, file integrity, threat detection |
+| **nessus** | tenable/nessus:latest-oracle | 8834 | Vulnerability scanner — detects flaws, misconfigurations, and insecure protocols |
 
 ### Identity and Access Management
 
@@ -106,6 +108,28 @@ Real-time web traffic analytics for Nginx Proxy Manager. Parses access logs to p
 - HTTP status codes and response times
 
 Serves an interactive HTML dashboard on port 7880 (`http://<pi-ip>:7880`).
+
+### Security Stack
+
+#### Wazuh (SIEM + XDR)
+
+Open-source security platform providing XDR and SIEM protection for endpoints and cloud workloads. Runs on the Pi with agents deployed to the VPS and other endpoints over Tailscale.
+
+- **File Integrity Monitoring (FIM)** — real-time filesystem change detection with configurable ignore paths and VirusTotal hash integration
+- **CIS Benchmarks** — automated compliance scanning for Windows and Linux endpoints
+- **SOAR automation** — n8n workflow routes high-severity alerts to a self-hosted Ollama LLM for AI-powered triage, or triggers VirusTotal malware investigation with ntfy/Gmail notifications
+
+Configs are in [`wazuh/`](wazuh/). Detailed walkthroughs at [mluchetti.com/docs/security/wazuh](https://mluchetti.com/docs/security/wazuh/).
+
+#### Tenable Nessus
+
+Self-hosted vulnerability scanner running on the Pi. Detects software flaws, missing patches, misconfigurations, default credentials, and insecure protocols across networked devices.
+
+- **Nessus Essentials** — free license supporting up to 16 IP addresses per scanner
+- **Comprehensive scanning** — hosts, web apps, cloud environments, and containerized services
+- **Remediation tracking** — generates severity-ranked vulnerability reports with actionable fix guidance
+
+Docs at [mluchetti.com/docs/security/nessus](https://mluchetti.com/docs/security/nessus/).
 
 ### Automation Stack
 

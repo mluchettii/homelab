@@ -1,0 +1,26 @@
+#!/bin/sh
+# /var/ossec/integrations/custom-n8n
+# Wazuh integration wrapper — forwards alerts to n8n webhook
+
+WPYTHON_BIN="framework/python/bin/python3"
+
+SCRIPT_PATH_NAME="$0"
+DIR_NAME="$(cd "$(dirname "${SCRIPT_PATH_NAME}")"; pwd -P)"
+SCRIPT_NAME="$(basename "${SCRIPT_PATH_NAME}")"
+
+case "${DIR_NAME}" in
+  */active-response/bin|*/wodles*)
+    [ -z "${WAZUH_PATH}" ] && WAZUH_PATH="$(cd "${DIR_NAME}/../.."; pwd)"
+    PYTHON_SCRIPT="${DIR_NAME}/${SCRIPT_NAME}.py"
+    ;;
+  */bin)
+    [ -z "${WAZUH_PATH}" ] && WAZUH_PATH="$(cd "${DIR_NAME}/.."; pwd)"
+    PYTHON_SCRIPT="${WAZUH_PATH}/framework/scripts/$(echo "${SCRIPT_NAME}" | sed 's/\-/_/g').py"
+    ;;
+  */integrations)
+    [ -z "${WAZUH_PATH}" ] && WAZUH_PATH="$(cd "${DIR_NAME}/.."; pwd)"
+    PYTHON_SCRIPT="${DIR_NAME}/${SCRIPT_NAME}.py"
+    ;;
+esac
+
+exec "${WAZUH_PATH}/${WPYTHON_BIN}" "${PYTHON_SCRIPT}" "$@"
