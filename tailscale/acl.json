@@ -1,0 +1,60 @@
+{
+  "acl": {
+    "grants": [
+      // DNS
+      {
+        "src": ["tag:clients"],
+        "dst": ["tag:pi"],
+        "ip":  ["tcp:53", "udp:53"]
+      },
+      // HTTP/HTTPS
+      {
+        "src": ["tag:clients"],
+        "dst": ["tag:servers"],
+        "ip":  ["tcp:80", "tcp:443"]
+      },
+      // SSH
+      {
+        "src": ["tag:clients"],
+        "dst": ["tag:pi"],
+        "ip":  ["tcp:22"]
+      },
+      // Wazuh
+      {
+        "src": ["tag:clients"],
+        "dst": ["tag:pi"],
+        "ip":  ["tcp:1514", "tcp:1515", "tcp:55000"]
+      },
+      // Subnet route
+      {
+        "src": ["tag:clients"],
+        "dst": ["10.0.30.0/24"],
+        "ip":  ["*:*"]
+      },
+      // Exit node
+      {
+        "src": ["tag:clients"],
+        "dst": ["autogroup:internet"],
+        "ip":  ["*:*"]
+      },
+      // Peer relay
+      {
+        "src": ["tag:clients"],
+        "dst": ["tag:servers"],
+        "ip":  ["udp:40000"],
+        "app": {"tailscale.com/cap/relay": []}
+      }
+    ],
+
+    "tagOwners": {
+      // Hosts with peer relay activated
+      "tag:servers": ["autogroup:owner"],
+      "tag:clients": ["autogroup:owner"],
+      "tag:pi":      ["autogroup:owner"]
+    },
+
+    "autoApprovers": {
+      "exitNode": ["tag:servers"]
+    }
+  }
+}
