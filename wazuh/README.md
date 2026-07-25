@@ -68,3 +68,11 @@ Wazuh agents communicate with the server over Tailscale — no port forwarding r
 ```
 
 This is included in `tailscale/acl.json` in the repo root.
+
+## Credits
+
+This SOAR workflow and integration scripts are adapted from community projects:
+
+- **[Mariskarthick M.](https://n8n.io/workflows/6978-automate-wazuh-alert-triage-and-reporting-with-gpt-4o-mini-and-telegram/)** — n8n workflow for Wazuh alert triage and reporting with GPT-4o-mini and Telegram
+- **[Rajneesh G.](https://n8n.io/workflows/5997-malicious-file-detection-and-response-wazuh-to-virustotal-with-slack-alerts/)** — n8n workflow for malicious file detection and response from Wazuh to VirusTotal with Slack alerts
+- **[eaglefin](https://github.com/eaglefn/wazuh-n8n-workflow)** — custom n8n webhook integration scripts (`custom-n8n` shell wrapper and `custom-n8n.py` Python script)
