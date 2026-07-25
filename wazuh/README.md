@@ -53,7 +53,7 @@ n8n SOAR workflow
     └── Malware check → VirusTotal → ntfy + Gmail
 ```
 
-All communication between Wazuh, n8n, and Ollama happens over the `automation-stack` Docker network on the Pi. The ntfy webhook is exposed via Tailscale (`n8n.ts.domain.com`).
+All communication between Wazuh, n8n, and Ollama happens over the `automation-stack` Docker network on the Pi. The ntfy webhook is exposed via Tailscale (`n8n.ts.mydomain.com`).
 
 ## Tailscale ACL
 

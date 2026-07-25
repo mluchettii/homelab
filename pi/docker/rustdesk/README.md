@@ -4,7 +4,7 @@ Open-source remote desktop server — a self-hosted alternative to TeamViewer an
 
 ## Access
 
-- **ID/Relay Server**: `rustdesk.ts.domain.com` (via Tailscale)
+- **ID/Relay Server**: `rustdesk.ts.mydomain.com` (via Tailscale)
 - **Ports**: 21114–21119 (TCP), 21116 (UDP)
 
 ## Deployment
@@ -27,7 +27,7 @@ Look for the `Key:` line in the output. Then configure RustDesk clients:
 1. Download the client from <https://github.com/rustdesk/rustdesk/releases>
 2. Navigate to **Network → ID/Relay server**
 3. Enter:
-   - **ID server**: `rustdesk.ts.domain.com:21116`
+   - **ID server**: `rustdesk.ts.mydomain.com:21116`
    - **Key**: (from `docker logs rustdesk`)
    - **Relay server** and **API server** are auto-detected
 4. Verify the server status shows **Ready**

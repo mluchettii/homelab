@@ -15,7 +15,7 @@ Clientless remote desktop gateway supporting VNC, RDP, and SSH via HTML5. Runs t
    docker compose up -d
    ```
 
-3. Access the web interface at `http://guacamole.ts.domain.com` (or your configured port).
+3. Access the web interface at `http://guacamole.ts.mydomain.com` (or your configured port).
 
 ## SSO with Authentik (Optional)
 

@@ -47,10 +47,10 @@ Monitors container logs and sends alerts to NTFY. Uses a read-only socket proxy 
    ```
 
 3. Access services via Tailscale DNS:
-   - **n8n** — `n8n.ts.domain.com`
-   - **Ollama** — `ollama.ts.domain.com`
-   - **Open WebUI** — `open-webui.ts.domain.com`
-   - **NTFY** — `ntfy.ts.domain.com` (HTTP), `https://ntfy.ts.domain.com` (HTTPS)
+   - **n8n** — `n8n.ts.mydomain.com`
+   - **Ollama** — `ollama.ts.mydomain.com`
+   - **Open WebUI** — `open-webui.ts.mydomain.com`
+   - **NTFY** — `ntfy.ts.mydomain.com` (HTTP), `https://ntfy.ts.mydomain.com` (HTTPS)
 
 n8n (workflow engine)
     ↓

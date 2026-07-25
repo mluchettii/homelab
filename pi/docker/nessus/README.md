@@ -4,7 +4,7 @@ Self-hosted vulnerability scanner for detecting software flaws, missing patches,
 
 ## Access
 
-- **URL**: `https://nessus.ts.domain.com` (via Tailscale)
+- **URL**: `https://nessus.ts.mydomain.com` (via Tailscale)
 - **Port**: 8834 (host network mode)
 
 ## Deployment
