@@ -156,9 +156,23 @@ Two wildcard DNS records route traffic:
 
 Tailscale runs as a Docker container in host network mode on the Pi, providing zero-trust mesh VPN. The DigitalOcean droplet connects via a Newt (Pangolin's WireGuard agent) tunnel, enabling secure communication between cloud and homelab without opening firewall ports.
 
-ACL rules restrict node-to-Pi traffic:
-- All tailnet nodes → Pi: DNS (53), HTTP/HTTPS (80, 443) only
-- Workstation node only → Pi/VPS: SSH (22)
+Tailnet nodes are organized into tags:
+
+| Tag | Host |
+|-----|------|
+| `tag:clients` | Workstations / mobile devices |
+| `tag:pi` | Raspberry Pi 5 (homelab) |
+| `tag:servers` | DigitalOcean VPS (Pangolin stack) |
+
+ACL rules are defined in [`tailscale/acl.json`](tailscale/acl.json). Key policies:
+
+- **DNS** — clients → Pi (tcp/udp:53)
+- **HTTP/HTTPS** — clients → servers (tcp:80, 443)
+- **SSH** — clients → Pi (tcp:22)
+- **Wazuh** — clients → Pi (tcp:1514, 1515, 55000)
+- **Subnet route** — clients → 10.0.30.0/24 (all ports)
+- **Exit node** — clients → internet (all traffic)
+- **Peer relay** — clients → servers (udp:40000)
 
 ### Network Segmentation (MikroTik)
 
