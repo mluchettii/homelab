@@ -46,14 +46,11 @@ Monitors container logs and sends alerts to NTFY. Uses a read-only socket proxy 
    docker compose up -d
    ```
 
-3. Access services:
-   - **n8n** — `http://<pi-ip>:5678`
-   - **Ollama** — `http://<pi-ip>:11434`
-   - **Open WebUI** — `http://<pi-ip>:3020`
-   - **NTFY** — `http://<pi-ip>:8015` (HTTP), `https://<pi-ip>:9015` (HTTPS)
-
-## Architecture
-
+3. Access services via Tailscale DNS:
+   - **n8n** — `n8n.ts.domain.com`
+   - **Ollama** — `ollama.ts.domain.com`
+   - **Open WebUI** — `open-webui.ts.domain.com`
+   - **NTFY** — `ntfy.ts.domain.com` (HTTP), `https://ntfy.ts.domain.com` (HTTPS)
 ```
 n8n (workflow engine)
     ↓

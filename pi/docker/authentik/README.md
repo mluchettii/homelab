@@ -21,7 +21,7 @@ Open-source Identity Provider with reverse proxy, SSO, and MFA. Runs three conta
    docker compose up -d
    ```
 
-4. Navigate to `http://<pi-ip>:9000` to create the initial `akadmin` user.
+4. Navigate to `http://authentik.ts.domain.com` to create the initial `akadmin` user.
 
 ## SSO Integration
 

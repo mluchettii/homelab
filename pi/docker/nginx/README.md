@@ -21,7 +21,7 @@ Real-time web traffic analytics for Nginx Proxy Manager. Parses access logs to p
 - Operating system, browser, and device breakdown
 - HTTP status codes and response times
 
-Accessible at `http://<pi-ip>:7880` (bound to localhost only).
+Accessible at `http://goaccess.ts.domain.com` (bound to localhost only, accessible via Tailscale DNS).
 
 ## Setup
 
