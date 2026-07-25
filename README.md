@@ -124,7 +124,7 @@ Push notification infrastructure:
 - **ntfy** — self-hosted push notification server with web dashboard and CLI
 - **loggifly** — monitors container logs and sends alerts to NTFY
 
-### Security Stack
+### VPS Stack
 
 #### Pangolin (CrowdSec + Traefik + Pangolin + Gerbil)
 
