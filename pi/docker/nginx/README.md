@@ -21,7 +21,7 @@ Real-time web traffic analytics for Nginx Proxy Manager. Parses access logs to p
 - Operating system, browser, and device breakdown
 - HTTP status codes and response times
 
-Accessible at `http://goaccess.ts.domain.com` (bound to localhost only, accessible via Tailscale DNS).
+Accessible at `nginx.ts.domain.com` via reverse proxy; GoAccess dashboard is bound to localhost only (`:7880`).
 
 ## Setup
 
@@ -33,6 +33,12 @@ Accessible at `http://goaccess.ts.domain.com` (bound to localhost only, accessib
 2. Navigate to `http://<pi-ip>:81` to access the Nginx Proxy Manager admin panel. Create an initial admin account.
 
 3. Configure proxy hosts and SSL certificates through the web UI.
+
+## Access
+
+- **Nginx Proxy Manager** — `nginx.ts.domain.com` (reverse proxy, HTTP/HTTPS)
+- **NPM Admin Panel** — `http://<pi-ip>:81` (direct access only)
+- **GoAccess** — `http://<pi-ip>:7880` (localhost only)
 
 ## Configuration Notes
 
