@@ -1,6 +1,6 @@
-# Home Server Docker Compose
+# Homelab
 
-Docker Compose infrastructure running across a Raspberry Pi 5 (homelab) and a DigitalOcean droplet (cloud proxy). Services are managed via Tailscale for private mesh networking, with Cloudflare DNS and a DigitalOcean VPS running Pangolin for secure public-facing access.
+Documentation of my homelab running across a Raspberry Pi 5 and a DigitalOcean VPS (Pangolin stack), connected via Tailscale mesh. Services are managed with Docker Compose, DNS is handled by Cloudflare, and a MikroTik hEX S router enforces network segmentation.
 
 Each service lives in its own directory with a standalone `docker-compose.yml` and a `.env` file. See `.env.example` for all variables with generation instructions.
 
