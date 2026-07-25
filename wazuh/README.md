@@ -24,7 +24,7 @@ Shell wrapper script installed at `/var/ossec/integrations/custom-n8n`. Resolves
 
 Python script that reads a Wazuh alert JSON file, extracts key fields (agent info, rule details, MITRE ATT&CK mapping, source IPs), and POSTs a structured payload to the n8n webhook URL. The `custom-n8n` integration in `ossec.conf` calls this script with the alert file path and webhook URL as arguments.
 
-### `n8n-workflows/wazuh-hybrid-soar.json`
+### `../pi/docker/automation/n8n-workflows/wazuh-hybrid-soar.json`
 
 n8n workflow JSON — the complete SOAR automation. Two pipelines:
 
