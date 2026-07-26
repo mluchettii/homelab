@@ -31,7 +31,7 @@ n8n workflow JSON — the complete SOAR automation. Two pipelines:
 1. **AI triage** — high-severity alerts (level ≥ 9) are sent to a self-hosted Ollama `qwen2.5:3b` model for SOC-style investigation reports, then formatted and sent to ntfy. The prompt asks for alert name, description, MITRE ATT&CK mapping, impacted scope, reputation checks, analysis, verdict, and security recommendations
 2. **Malware investigation** — FIM malware hash alerts (rule IDs 110002, 87105) are validated against VirusTotal, with results sent via ntfy (with clickable VT hash link) and formatted HTML email
 
-### `../../pi/docker/automation/ntfy/config/server.yml`
+### `../pi/docker/automation/ntfy/config/server.yml`
 
 ntfy server configuration. This file belongs in your ntfy container's config directory:
 

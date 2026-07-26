@@ -11,8 +11,8 @@ Each service lives in its own directory with a standalone `docker-compose.yml` a
 flowchart TB
     subgraph DNS["Cloudflare DNS"]
         direction LR
-        A1["*.example.com<br/>A record"] --> A2["DigitalOcean VPS"]
-        B1["*.ts.example.com<br/>A record"] --> B2["Pi Tailscale IP"]
+        A1["*.mydomain.com<br/>A record"] --> A2["DigitalOcean VPS"]
+        B1["*.ts.mydomain.com<br/>A record"] --> B2["Pi Tailscale IP"]
     end
     subgraph VPS["DigitalOcean VPS (Pangolin stack)"]
         direction TB
@@ -138,8 +138,8 @@ DigitalOcean VPS stack with CrowdSec IDS, Traefik reverse proxy, and Pangolin se
 ### DNS (Cloudflare)
 
 Two wildcard DNS records route traffic:
-- `*.example.com` → DigitalOcean VPS public IP (public-facing services via Pangolin)
-- `*.ts.example.com` → Pi's Tailscale IP (private services over Tailscale mesh)
+- `*.mydomain.com` → DigitalOcean VPS public IP (public-facing services via Pangolin)
+- `*.ts.mydomain.com` → Pi's Tailscale IP (private services over Tailscale mesh)
 
 ### Tailscale Mesh
 

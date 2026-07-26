@@ -51,6 +51,7 @@ Monitors container logs and sends alerts to NTFY. Uses a read-only socket proxy 
    - **Ollama** — `ollama.ts.mydomain.com`
    - **Open WebUI** — `open-webui.ts.mydomain.com`
    - **NTFY** — `ntfy.ts.mydomain.com` (HTTP), `https://ntfy.ts.mydomain.com` (HTTPS)
+```
 
 n8n (workflow engine)
     ↓
@@ -59,6 +60,7 @@ Ollama (LLM inference) ←→ Open WebUI (chat UI, RAG)
 NTFY (push notifications) ←→ LoggiFly (log monitoring)
     ↓
 loggifly-socket-proxy (read-only Docker socket)
+```
 
 
 All services communicate over the `automation-stack` Docker network (`172.31.0.0/16`). The Wazuh SOAR integration triggers n8n workflows via webhook, which then route alerts to Ollama for AI triage or to NTFY for push notifications.
